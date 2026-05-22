@@ -1,60 +1,64 @@
+```html
 <!DOCTYPE html>
 <html lang="pt-br">
-<link rel="stylesheet" href=st">
 
 <head>
   <meta charset="UTF-8">
-  <title>Sistemas Distribuídos - Sincronização</title>
+  <title>Sistemas Distribuídos - Relógio Lógico</title>
+
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, sans-serif;
-      background: linear-gradient(135deg, #1e293b, #0f172a);
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: white;
       margin: 0;
       padding: 20px;
-      color: #e2e8f0;
     }
 
     h1 {
-      margin-bottom: 30px;
-      font-weight: 600;
       color: #38bdf8;
+      margin-bottom: 5px;
+    }
+
+    .subtitulo {
+      color: #94a3b8;
+      margin-bottom: 30px;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
     }
 
     .box {
       background: rgba(30, 41, 59, 0.8);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(148, 163, 184, 0.2);
-      padding: 20px;
-      margin: 20px auto;
-      width: 420px;
+      border: 1px solid #334155;
       border-radius: 16px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-      transition: 0.3s;
+      padding: 20px;
+      width: 420px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.4);
     }
 
-    .box:hover {
-      transform: translateY(-5px);
-    }
-
-    h2 {
+    .box h2 {
       color: #7dd3fc;
-      margin-bottom: 15px;
+      margin-top: 0;
     }
 
     input {
-      width: 80%;
-      padding: 8px;
+      width: 90%;
+      padding: 10px;
       border-radius: 8px;
-      border: none;
-      margin: 5px 0;
-      outline: none;
-      background: #0f172a;
-      color: #e2e8f0;
       border: 1px solid #334155;
-      transition: 0.2s;
+      background: #0f172a;
+      color: white;
+      margin-top: 5px;
+      margin-bottom: 10px;
     }
 
     input:focus {
+      outline: none;
       border-color: #38bdf8;
       box-shadow: 0 0 8px #38bdf855;
     }
@@ -67,13 +71,40 @@
       border-radius: 10px;
       cursor: pointer;
       font-weight: bold;
-      margin-top: 10px;
       transition: 0.3s;
     }
 
     button:hover {
       transform: scale(1.05);
       box-shadow: 0 0 15px #38bdf8aa;
+    }
+
+    .status-container {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 25px;
+    }
+
+    .status-card {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 15px;
+      width: 220px;
+      text-align: center;
+    }
+
+    .status-card h3 {
+      margin: 0;
+      color: #38bdf8;
+      margin-bottom: 10px;
+    }
+
+    .status-card span {
+      font-size: 22px;
+      font-weight: bold;
     }
 
     hr {
@@ -83,132 +114,381 @@
       margin: 20px 0;
     }
 
+    #logs {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .log-item {
+      background: #0f172a;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      border-left: 4px solid #38bdf8;
+      font-size: 14px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      background: #1e293b;
+      color: #38bdf8;
+      padding: 10px;
+    }
+
+    td {
+      padding: 10px;
+      text-align: center;
+      border-bottom: 1px solid #334155;
+    }
+
+    tr:hover {
+      background: rgba(255,255,255,0.05);
+    }
+
     #resultado {
       background: #020617;
       border: 1px solid #334155;
-      color: #22c55e;
-      padding: 20px;
-      margin: 30px auto;
-      width: 420px;
       border-radius: 12px;
+      padding: 20px;
       white-space: pre-line;
-      text-align: left;
+      color: #22c55e;
       font-family: monospace;
-      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.7);
+    }
+
+    .fila {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .fila-item {
+      background: #0f172a;
+      border-left: 5px solid #22c55e;
+      padding: 12px;
+      border-radius: 10px;
     }
   </style>
 </head>
 
 <body>
 
-  <h1>Simulação - Sistemas Distribuídos</h1>
+  <center>
+    <h1>Simulação de Sistemas Distribuídos</h1>
+    <div class="subtitulo">
+      Controle de recurso compartilhado utilizando Relógio Lógico de Lamport
+    </div>
+  </center>
 
-  <div class="box">
-    <h2>Servidor</h2>
-    Hora Local: <span id="horaServidor"></span><br><br>
-    <button onclick="sincronizar()">Sincronizar</button>
+  <div class="status-container">
+
+    <div class="status-card">
+      <h3>Clock Servidor</h3>
+      <span id="clockServidorTela">0</span>
+    </div>
+
+    <div class="status-card">
+      <h3>Status do Recurso</h3>
+      <span id="statusRecurso">🟢 Livre</span>
+    </div>
+
+    <div class="status-card">
+      <h3>Total Eventos</h3>
+      <span id="totalEventos">0</span>
+    </div>
+
   </div>
 
-  <div class="box">
-    <h2>Clientes</h2>
+  <div class="container">
 
-    <div>
-      Cliente 1<br>
-      Hora Local: <input id="c1Hora"><br>
-      Clock Lógico: <input id="c1Clock" type="number"><br>
-      <button onclick="enviar(1)">Enviar</button>
+    <div class="box">
+      <h2>Servidor</h2>
+
+      Hora Local:
+      <span id="horaServidor"></span>
+
+      <br><br>
+
+      <button onclick="sincronizar()">
+        Sincronizar Sistema
+      </button>
     </div>
 
-    <hr>
+    <div class="box">
+      <h2>Clientes</h2>
 
-    <div>
-      Cliente 2<br>
-      Hora Local: <input id="c2Hora"><br>
-      Clock Lógico: <input id="c2Clock" type="number"><br>
-      <button onclick="enviar(2)">Enviar</button>
+      <div>
+        <h3>Cliente 1</h3>
+
+        Hora Local:
+        <input id="c1Hora" placeholder="Ex: 10:30">
+
+        Clock Lógico:
+        <input id="c1Clock" type="number" placeholder="Ex: 1">
+
+        <button onclick="enviar(1)">
+          Enviar Evento
+        </button>
+      </div>
+
+      <hr>
+
+      <div>
+        <h3>Cliente 2</h3>
+
+        Hora Local:
+        <input id="c2Hora" placeholder="Ex: 10:31">
+
+        Clock Lógico:
+        <input id="c2Clock" type="number" placeholder="Ex: 2">
+
+        <button onclick="enviar(2)">
+          Enviar Evento
+        </button>
+      </div>
+
+      <hr>
+
+      <div>
+        <h3>Cliente 3</h3>
+
+        Hora Local:
+        <input id="c3Hora" placeholder="Ex: 10:32">
+
+        Clock Lógico:
+        <input id="c3Clock" type="number" placeholder="Ex: 3">
+
+        <button onclick="enviar(3)">
+          Enviar Evento
+        </button>
+      </div>
+
     </div>
 
-    <hr>
-
-    <div>
-      Cliente 3<br>
-      Hora Local: <input id="c3Hora"><br>
-      Clock Lógico: <input id="c3Clock" type="number"><br>
-      <button onclick="enviar(3)">Enviar</button>
+    <div class="box">
+      <h2>Logs do Sistema</h2>
+      <div id="logs"></div>
     </div>
+
+    <div class="box">
+      <h2>Tabela de Eventos</h2>
+
+      <table id="tabelaEventos">
+
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Hora Local</th>
+            <th>Hora Envio</th>
+            <th>Clock Cliente</th>
+            <th>Clock Servidor</th>
+          </tr>
+        </thead>
+
+        <tbody></tbody>
+
+      </table>
+    </div>
+
+    <div class="box">
+      <h2>Fila de Processos</h2>
+      <div class="fila" id="filaProcessos"></div>
+    </div>
+
+    <div class="box">
+      <h2>Resultado da Sincronização</h2>
+      <div id="resultado"></div>
+    </div>
+
   </div>
-
-  <div id="resultado"></div>
 
   <script>
+
     let eventos = [];
     let clockServidor = 0;
 
     function atualizarHoraServidor() {
+
       let agora = new Date();
+
       document.getElementById("horaServidor").innerText =
         agora.toLocaleTimeString();
     }
 
     setInterval(atualizarHoraServidor, 1000);
 
+    function adicionarLog(texto) {
+
+      let logs = document.getElementById("logs");
+
+      logs.innerHTML += `
+        <div class="log-item">
+          ${texto}
+        </div>
+      `;
+
+      logs.scrollTop = logs.scrollHeight;
+    }
+
     function enviar(cliente) {
-      let hora = document.getElementById(`c${cliente}Hora`).value;
-      let clock = parseInt(document.getElementById(`c${cliente}Clock`).value);
+
+      let hora =
+        document.getElementById(`c${cliente}Hora`).value;
+
+      let clock =
+        parseInt(document.getElementById(`c${cliente}Clock`).value);
 
       if (!hora || isNaN(clock)) {
+
         alert("Preencha todos os campos!");
+
         return;
       }
 
-      clockServidor = Math.max(clockServidor, clock) + 1;
+      let horaEnvio =
+        new Date().toLocaleTimeString();
+
+      clockServidor =
+        Math.max(clockServidor, clock) + 1;
 
       eventos.push({
+
         cliente: cliente,
-        hora: hora,
-        clock: clockServidor
+        horaLocal: hora,
+        horaEnvio: horaEnvio,
+        clockCliente: clock,
+        clockServidor: clockServidor
+
       });
+
+      document.getElementById("clockServidorTela").innerText =
+        clockServidor;
+
+      document.getElementById("totalEventos").innerText =
+        eventos.length;
+
+      let tbody =
+        document.querySelector("#tabelaEventos tbody");
+
+      tbody.innerHTML += `
+
+        <tr>
+          <td>Cliente ${cliente}</td>
+          <td>${hora}</td>
+          <td>${horaEnvio}</td>
+          <td>${clock}</td>
+          <td>${clockServidor}</td>
+        </tr>
+
+      `;
+
+      adicionarLog(`
+
+        🟢 Cliente ${cliente} enviou mensagem<br>
+        ⏰ Hora Local: ${hora}<br>
+        📤 Hora Envio: ${horaEnvio}<br>
+        🧠 Clock Cliente: ${clock}<br>
+        🖥️ Clock Servidor: ${clockServidor}
+
+      `);
 
       alert(`Mensagem do Cliente ${cliente} recebida!`);
     }
 
     function sincronizar() {
+
       if (eventos.length === 0) {
-        alert("Nenhum evento ainda!");
+
+        alert("Nenhum evento enviado!");
+
         return;
       }
 
+      document.getElementById("statusRecurso").innerText =
+        "🔴 Ocupado";
+
       let soma = clockServidor;
-      eventos.forEach(e => soma += e.clock);
 
-      let media = Math.floor(soma / (eventos.length + 1));
+      eventos.forEach(e => {
+        soma += e.clockServidor;
+      });
 
-      let resultado = `Clock Servidor: ${clockServidor}\n`;
+      let media =
+        Math.floor(soma / (eventos.length + 1));
+
+      let resultado = "";
+
+      resultado += `Clock Servidor: ${clockServidor}\n\n`;
+
       resultado += `Clock Médio: ${media}\n\n`;
 
-      resultado += "Ajustes:\n";
+      resultado += "Ajustes Necessários:\n\n";
+
       resultado += `Servidor: ${media - clockServidor}\n`;
 
       eventos.forEach(e => {
-        resultado += `Cliente ${e.cliente}: ${media - e.clock}\n`;
+
+        resultado +=
+          `Cliente ${e.cliente}: ${media - e.clockServidor}\n`;
+
       });
 
       eventos.sort((a, b) => {
-        if (a.clock === b.clock) {
+
+        if (a.clockServidor === b.clockServidor) {
+
           return a.cliente - b.cliente;
         }
-        return a.clock - b.clock;
+
+        return a.clockServidor - b.clockServidor;
       });
 
-      resultado += "\nOrdem de envio:\n";
+      resultado += "\nOrdem de Acesso ao Recurso:\n\n";
+
+      let fila =
+        document.getElementById("filaProcessos");
+
+      fila.innerHTML = "";
+
       eventos.forEach((e, i) => {
-        resultado += `${i + 1}º -> Cliente ${e.cliente} (Clock: ${e.clock})\n`;
+
+        resultado +=
+          `${i + 1}º -> Cliente ${e.cliente} | Clock ${e.clockServidor}\n`;
+
+        fila.innerHTML += `
+
+          <div class="fila-item">
+            ${i + 1}º Processo:
+            Cliente ${e.cliente}
+            (Clock ${e.clockServidor})
+          </div>
+
+        `;
       });
 
-      document.getElementById("resultado").innerText = resultado;
+      resultado += "\nExplicação:\n\n";
+
+      resultado +=
+        `Cliente ${eventos[0].cliente} recebeu prioridade por possuir o menor clock lógico.`;
+
+      adicionarLog(`
+
+        🔄 Sistema sincronizado<br>
+        📊 Clock médio calculado: ${media}<br>
+        🏆 Cliente ${eventos[0].cliente} possui prioridade de acesso
+
+      `);
+
+      document.getElementById("resultado").innerText =
+        resultado;
     }
+
   </script>
 
 </body>
 
 </html>
+```
